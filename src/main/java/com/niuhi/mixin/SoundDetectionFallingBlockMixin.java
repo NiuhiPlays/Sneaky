@@ -3,6 +3,7 @@ package com.niuhi.mixin;
 import com.niuhi.config.ConfigLoader;
 import com.niuhi.detection.SoundDetection;
 import net.minecraft.entity.FallingBlockEntity;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -20,7 +21,7 @@ public class SoundDetectionFallingBlockMixin {
         if (world.isClient) return;
 
         var block = entity.getBlockState().getBlock();
-        String blockId = block.getRegistryEntry().getKey().get().getValue().toString();
+        String blockId = Registries.BLOCK.getId(block).toString();
         var config = ConfigLoader.getConfig().soundDetection;
 
         if (config.fallingBlock.useBlockTags) {
