@@ -3,15 +3,15 @@
 	"id": "sneaky-mod",
 	"version": "${version}",
 	"name": "Sneaky Mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Making sneaking function.. Aka stealth!",
 	"authors": [
-		"Me!"
+		"Niuhi"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
-	"license": "CC0-1.0",
+	"license": "CC-BY-SA-4.0",
 	"icon": "assets/sneaky-mod/icon.png",
 	"environment": "*",
 	"entrypoints": {

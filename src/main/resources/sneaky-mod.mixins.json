@@ -3,7 +3,12 @@
 	"package": "com.niuhi.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
+		"ViewConeMixin",
+		"StealthDetectionMixin",
+		"SoundDetectionPlayerMixin",
+		"SoundDetectionProjectileMixin",
+		"SoundDetectionExplosionMixin",
+		"SoundDetectionFallingBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
