@@ -43,13 +43,11 @@ public class SoundDetectionPlayerMixin {
                     } else if (tagId.equals("minecraft:buttons") && state.isIn(BlockTags.BUTTONS)) {
                         SoundDetection.handleSoundEvent(world, pos, radius, ConfigLoader.getConfig());
                         return ActionResult.PASS;
-                    } else if (tagId.equals("minecraft:pressure_plates") && state.isIn(BlockTags.WOODEN_PRESSURE_PLATES)) {
-                        SoundDetection.handleSoundEvent(world, pos, radius, ConfigLoader.getConfig());
-                        return ActionResult.PASS;
-                    } else if (tagId.equals("minecraft:pressure_plates") && state.isIn(BlockTags.STONE_PRESSURE_PLATES)) {
+                    } else if (tagId.equals("minecraft:pressure_plates") && state.isIn(BlockTags.PRESSURE_PLATES)) {
                         SoundDetection.handleSoundEvent(world, pos, radius, ConfigLoader.getConfig());
                         return ActionResult.PASS;
                     }
+
                 }
             }
 
