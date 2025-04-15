@@ -24,6 +24,6 @@ public class SoundDetectionProjectileMixin {
 
         BlockPos pos = blockHitResult.getBlockPos();
         var config = ConfigLoader.getConfig().soundDetection;
-        SoundDetection.handleSoundEvent(world, pos, config.projectileImpactRadius, ConfigLoader.getConfig());
+        SoundDetection.handleSoundEvent(world, pos, config.projectile.defaultRadius, ConfigLoader.getConfig());
     }
 }

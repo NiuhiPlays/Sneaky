@@ -2,9 +2,8 @@ package com.niuhi.mixin;
 
 import com.niuhi.config.ConfigLoader;
 import com.niuhi.detection.SoundDetection;
-import net.minecraft.block.AnvilBlock;
-import net.minecraft.block.PointedDripstoneBlock;
 import net.minecraft.entity.FallingBlockEntity;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,23 +14,30 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(FallingBlockEntity.class)
 public class SoundDetectionFallingBlockMixin {
     @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/FallingBlockEntity;discard()V"))
-    private void onAnvilLand(CallbackInfo ci) {
+    private void onBlockLand(CallbackInfo ci) {
         FallingBlockEntity entity = (FallingBlockEntity) (Object) this;
         World world = entity.getWorld();
-        if (world.isClient || !(entity.getBlockState().getBlock() instanceof AnvilBlock)) return;
+        if (world.isClient) return;
 
-        BlockPos pos = entity.getBlockPos();
+        var block = entity.getBlockState().getBlock();
+        String blockId = block.getRegistryEntry().getKey().get().getValue().toString();
         var config = ConfigLoader.getConfig().soundDetection;
-        SoundDetection.handleSoundEvent(world, pos, config.blockFallRadius, ConfigLoader.getConfig());
-    }
-    @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/FallingBlockEntity;discard()V"))
-    private void onDripstoneLand(CallbackInfo ci) {
-        FallingBlockEntity entity = (FallingBlockEntity) (Object) this;
-        World world = entity.getWorld();
-        if (world.isClient || !(entity.getBlockState().getBlock() instanceof PointedDripstoneBlock)) return;
 
-        BlockPos pos = entity.getBlockPos();
-        var config = ConfigLoader.getConfig().soundDetection;
-            SoundDetection.handleSoundEvent(world, pos, config.blockFallRadius, ConfigLoader.getConfig());
+        if (config.fallingBlock.useBlockTags) {
+            for (var entry : config.fallingBlock.tagConfigs.entrySet()) {
+                String tagId = entry.getKey();
+                float radius = entry.getValue().radius;
+                if (tagId.equals("minecraft:concrete_powder") && entity.getBlockState().isIn(BlockTags.CONCRETE_POWDER)) {
+                    BlockPos pos = entity.getBlockPos();
+                    SoundDetection.handleSoundEvent(world, pos, radius, ConfigLoader.getConfig());
+                    return;
+                }
+            }
+        }
+
+        if (config.fallingBlock.fallingBlocks.containsKey(blockId)) {
+            BlockPos pos = entity.getBlockPos();
+            SoundDetection.handleSoundEvent(world, pos, config.fallingBlock.fallingBlocks.get(blockId).radius, ConfigLoader.getConfig());
         }
     }
+}

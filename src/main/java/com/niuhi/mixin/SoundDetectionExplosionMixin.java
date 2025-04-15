@@ -19,6 +19,6 @@ public class SoundDetectionExplosionMixin {
 
         BlockPos pos = new BlockPos((int) x, (int) y, (int) z);
         var config = ConfigLoader.getConfig().soundDetection;
-        SoundDetection.handleSoundEvent(world, pos, config.explosionRadius, ConfigLoader.getConfig());
+        SoundDetection.handleSoundEvent(world, pos, config.explosion.defaultRadius, ConfigLoader.getConfig());
     }
 }
