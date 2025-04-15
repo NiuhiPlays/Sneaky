@@ -27,5 +27,6 @@ public class Config {
         public float explosionRadius = 32.0f; // Blocks for explosions
         public float blockFallRadius = 10.0f; // Blocks for anvil landing
         public float soundCooldownSeconds = 2.0f; // Seconds before mob can react again
+        public float ambientSoundMultiplier = 0.5f; // Multiplier for sounds near ambient sources
     }
 }

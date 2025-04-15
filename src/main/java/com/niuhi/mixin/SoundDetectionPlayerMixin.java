@@ -43,7 +43,8 @@ public class SoundDetectionPlayerMixin {
             var stack = player.getStackInHand(hand);
             var config = ConfigLoader.getConfig().soundDetection;
 
-            if (stack.isOf(Items.ENDER_PEARL) || stack.isOf(Items.FLINT_AND_STEEL)) {
+            if (stack.isOf(Items.ENDER_PEARL) || stack.isOf(Items.FLINT_AND_STEEL)
+                    || stack.isOf(Items.GOAT_HORN)  || stack.isOf(Items.FIRE_CHARGE)  /**|| stack.isOf(Items.)**/) {
                 BlockPos pos = player.getBlockPos();
                 SoundDetection.handleSoundEvent(world, pos, config.useSoundRadius, ConfigLoader.getConfig());
             }

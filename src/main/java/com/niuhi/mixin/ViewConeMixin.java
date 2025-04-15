@@ -2,9 +2,12 @@ package com.niuhi.mixin;
 
 import com.niuhi.config.ConfigLoader;
 import com.niuhi.detection.ViewCone;
+import net.minecraft.block.CropBlock;
+import net.minecraft.block.TallPlantBlock;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,11 +22,21 @@ public class ViewConeMixin {
             return; // Only apply to hostile mobs and valid targets
         }
 
-        // Proximity check: Always detect if target is too close
-        double distance = mob.getPos().distanceTo(target.getPos());
+        // Hiding check: Sneaking in tall plants blocks detection
         var config = ConfigLoader.getConfig().viewCone;
+        if (config.hideInTallPlants && target instanceof PlayerEntity player && player.isSneaking()) {
+            var state = mob.getWorld().getBlockState(player.getBlockPos());
+            var block = state.getBlock();
+            if (block instanceof TallPlantBlock || block instanceof CropBlock) {
+                ci.cancel(); // Block detection, including proximity
+                return;
+            }
+        }
+
+        // Proximity check: Detect if target is too close
+        double distance = mob.getPos().distanceTo(target.getPos());
         if (distance <= config.proximityRadius) {
-            return; // Allow targeting, skip view cone and stealth checks
+            return; // Allow targeting, skip view cone check
         }
 
         // Normal view cone check
