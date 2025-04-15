@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
@@ -25,7 +26,7 @@ public class SoundDetectionPlayerMixin {
             var state = world.getBlockState(pos);
             var config = ConfigLoader.getConfig().soundDetection;
             Block block = state.getBlock();
-            String blockId = block.getRegistryEntry().getKey().get().getValue().toString();
+            String blockId = Registries.BLOCK.getId(block).toString();
 
             if (config.interaction.useBlockTags) {
                 for (var entry : config.interaction.tagConfigs.entrySet()) {
@@ -47,7 +48,6 @@ public class SoundDetectionPlayerMixin {
                         SoundDetection.handleSoundEvent(world, pos, radius, ConfigLoader.getConfig());
                         return ActionResult.PASS;
                     }
-
                 }
             }
 
@@ -64,7 +64,7 @@ public class SoundDetectionPlayerMixin {
             var stack = player.getStackInHand(hand);
             var config = ConfigLoader.getConfig().soundDetection;
             BlockPos pos = player.getBlockPos();
-            String itemId = stack.getItem().getRegistryEntry().getKey().get().getValue().toString();
+            String itemId = Registries.ITEM.getId(stack.getItem()).toString();
 
             if (config.use.items.containsKey(itemId)) {
                 SoundDetection.handleSoundEvent(world, pos, config.use.items.get(itemId).radius, ConfigLoader.getConfig());
