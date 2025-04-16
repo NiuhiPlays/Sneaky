@@ -11,14 +11,15 @@ public class Config {
     public static class ViewConeConfig {
         public float coneAngle = 60.0f; // Degrees
         public float maxDistance = 16.0f; // Blocks
-        public float proximityRadius = 1.0f; // Blocks to always detect player
-        public boolean hideInTallPlants = true; // Hides player when sneaking in tall plants
+
     }
 
     public static class StealthDetectionConfig {
         public float sneakMultiplier = 0.5f; // Detection chance multiplier when sneaking
         public float lightLevelMaxChance = 1.0f; // Chance at light level 15
         public float lightLevelMinChance = 0.0f; // Chance at light level 0
+        public float proximityRadius = 1.0f; // Blocks to always detect player
+        public boolean hideInTallPlants = true; // Hides player when sneaking in tall plants
     }
 
     public static class SoundDetectionConfig {

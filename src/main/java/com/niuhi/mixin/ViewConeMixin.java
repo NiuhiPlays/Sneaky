@@ -23,7 +23,7 @@ public class ViewConeMixin {
         }
 
         // Hiding check: Sneaking in tall plants blocks detection
-        var config = ConfigLoader.getConfig().viewCone;
+        var config = ConfigLoader.getConfig().stealthDetection;
         if (config.hideInTallPlants && target instanceof PlayerEntity player && player.isSneaking()) {
             var state = mob.getWorld().getBlockState(player.getBlockPos());
             var block = state.getBlock();

@@ -4,6 +4,7 @@ import com.niuhi.config.ConfigLoader;
 import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
@@ -18,6 +19,15 @@ public class SneakyMod implements ModInitializer {
 	public void onInitialize() {
 		ConfigLoader.getConfig();
 		registerCommands();
+		if (FabricLoader.getInstance().isModLoaded("yet_another_config_lib_v3") &&
+				FabricLoader.getInstance().isModLoaded("modmenu")) {
+			try {
+				Class.forName("com.niuhi.client.ClientInitializer").getMethod("init").invoke(null);
+				LOGGER.info("YACL and ModMenu detected, initialized client config integration");
+			} catch (Exception e) {
+				LOGGER.error("Failed to initialize YACL/ModMenu integration: {}", e.getMessage());
+			}
+		}
 		LOGGER.info("Sneaky Mod initialized");
 	}
 
@@ -32,7 +42,7 @@ public class SneakyMod implements ModInitializer {
 				CommandManager.literal("sneakymod")
 						.then(
 								CommandManager.literal("reload")
-										.requires(source -> source.hasPermissionLevel(2)) // Operator level
+										.requires(source -> source.hasPermissionLevel(2))
 										.executes(context -> {
 											boolean success = ConfigLoader.reloadConfig();
 											if (success) {

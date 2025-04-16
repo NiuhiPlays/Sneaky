@@ -11,7 +11,7 @@ import net.minecraft.util.math.Vec3d;
 public class ViewCone {
     public static boolean isInViewCone(HostileEntity mob, LivingEntity target, Config config) {
         // Check if player is hiding in tall plants (sneaking in tall grass, sugarcane, crops)
-        if (config.viewCone.hideInTallPlants && target instanceof PlayerEntity player && player.isSneaking()) {
+        if (config.stealthDetection.hideInTallPlants && target instanceof PlayerEntity player && player.isSneaking()) {
             BlockPos targetPos = player.getBlockPos();
             BlockState state = mob.getWorld().getBlockState(targetPos);
             Block block = state.getBlock();
