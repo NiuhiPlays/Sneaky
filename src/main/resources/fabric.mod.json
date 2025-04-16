@@ -20,6 +20,9 @@
 		],
 		"client": [
 			"com.niuhi.SneakyModClient"
+		],
+		"modmenu": [
+			"com.niuhi.config.ModMenu"
 		]
 	},
 	"mixins": [
@@ -36,6 +39,7 @@
 		"fabric-api": "*"
 	},
 	"suggests": {
-		"another-mod": "*"
+		"modmenu": "*",
+		"yet_another_config_lib_v3": "*"
 	}
 }
