@@ -8,7 +8,8 @@
 		"SoundDetectionPlayerMixin",
 		"SoundDetectionProjectileMixin",
 		"SoundDetectionExplosionMixin",
-		"SoundDetectionFallingBlockMixin"
+		"SoundDetectionFallingBlockMixin",
+		"PlayerFallingMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -5,6 +5,8 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.JukeboxBlock;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.fluid.FluidState;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
@@ -22,13 +24,42 @@ public class SoundDetection {
         long currentTick = world.getTime();
         float cooldownTicks = config.soundDetection.soundCooldownSeconds * 20.0f;
 
+        // Check for sound-softening blocks
+        float soundSofteningMultiplier = 1.0f;
+        var blockState = world.getBlockState(pos.down());
+        var block = blockState.getBlock();
+        String blockId = Registries.BLOCK.getId(block).toString();
+
+        // Check block tags for sound softening
+        if (config.soundDetection.soundSofteningUseBlockTags) {
+            for (var entry : config.soundDetection.soundSofteningTagConfigs.entrySet()) {
+                String tagId = entry.getKey();
+                float multiplier = entry.getValue().radius;
+                if (tagId.equals("minecraft:wool") && blockState.isIn(BlockTags.WOOL)) {
+                    soundSofteningMultiplier = multiplier;
+                    break;
+                } else if (tagId.equals("minecraft:carpets") && blockState.isIn(BlockTags.WOOL_CARPETS)) {
+                    soundSofteningMultiplier = multiplier;
+                    break;
+                } else if (tagId.equals("minecraft:leaves") && blockState.isIn(BlockTags.LEAVES)) {
+                    soundSofteningMultiplier = multiplier;
+                    break;
+                }
+            }
+        }
+
+        // Check individual blocks for sound softening (only if no tag match)
+        if (soundSofteningMultiplier == 1.0f && config.soundDetection.soundSofteningBlocks.containsKey(blockId)) {
+            soundSofteningMultiplier = config.soundDetection.soundSofteningBlocks.get(blockId).radius;
+        }
+
         // Check for ambient sound sources
-        float adjustedRadius = soundRadius;
+        float adjustedRadius = soundRadius * soundSofteningMultiplier;
         boolean isAmbientAffected = soundRadius == config.soundDetection.movement.walkRadius ||
                 soundRadius == config.soundDetection.movement.sprintRadius ||
                 soundRadius == config.soundDetection.movement.jumpRadius ||
                 config.soundDetection.use.items.values().stream().anyMatch(item -> item.radius == soundRadius) ||
-                config.soundDetection.interaction.blocks.values().stream().anyMatch(block -> block.radius == soundRadius);
+                config.soundDetection.interaction.blocks.values().stream().anyMatch(blockConfig -> blockConfig.radius == soundRadius);
         if (!isAmbientAffected && config.soundDetection.interaction.useBlockTags) {
             for (var entry : config.soundDetection.interaction.tagConfigs.entrySet()) {
                 if (entry.getValue().radius == soundRadius) {
@@ -52,15 +83,15 @@ public class SoundDetection {
                     for (int z = -3; z <= 3; z++) {
                         BlockPos checkPos = pos.add(x, y, z);
                         var state = world.getBlockState(checkPos);
-                        var block = state.getBlock();
+                        var checkBlock = state.getBlock();
 
-                        if (block == Blocks.WATER || block == Blocks.LAVA) {
+                        if (checkBlock == Blocks.WATER || checkBlock == Blocks.LAVA) {
                             FluidState fluidState = world.getFluidState(checkPos);
                             if (fluidState.isStill()) continue;
                             hasAmbientSound = true;
-                        } else if (block == Blocks.NETHER_PORTAL) {
+                        } else if (checkBlock == Blocks.NETHER_PORTAL) {
                             hasAmbientSound = true;
-                        } else if (block instanceof JukeboxBlock && state.get(JukeboxBlock.HAS_RECORD)) {
+                        } else if (checkBlock instanceof JukeboxBlock && state.get(JukeboxBlock.HAS_RECORD)) {
                             hasAmbientSound = true;
                         }
 
@@ -83,11 +114,11 @@ public class SoundDetection {
             finalRadius *= config.soundDetection.movement.multiplier;
         } else if (config.soundDetection.use.items.values().stream().anyMatch(item -> item.radius == soundRadius)) {
             finalRadius *= config.soundDetection.use.multiplier;
-        } else if (config.soundDetection.interaction.blocks.values().stream().anyMatch(block -> block.radius == soundRadius) ||
+        } else if (config.soundDetection.interaction.blocks.values().stream().anyMatch(blockConfig -> blockConfig.radius == soundRadius) ||
                 (config.soundDetection.interaction.useBlockTags &&
                         config.soundDetection.interaction.tagConfigs.values().stream().anyMatch(tag -> tag.radius == soundRadius))) {
             finalRadius *= config.soundDetection.interaction.multiplier;
-        } else if (config.soundDetection.fallingBlock.fallingBlocks.values().stream().anyMatch(block -> block.radius == soundRadius) ||
+        } else if (config.soundDetection.fallingBlock.fallingBlocks.values().stream().anyMatch(blockConfig -> blockConfig.radius == soundRadius) ||
                 (config.soundDetection.fallingBlock.useBlockTags &&
                         config.soundDetection.fallingBlock.tagConfigs.values().stream().anyMatch(tag -> tag.radius == soundRadius))) {
             finalRadius *= config.soundDetection.fallingBlock.multiplier;

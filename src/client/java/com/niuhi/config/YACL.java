@@ -58,7 +58,7 @@ public class YACL {
                                                 () -> config.soundDetection.movement.walkRadius,
                                                 value -> config.soundDetection.movement.walkRadius = value
                                         )
-                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(0.5f))
+                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(1.0f))
                                         .build())
                                 .option(Option.<Float>createBuilder()
                                         .name(Text.literal("Sprinting Radius"))
@@ -68,7 +68,7 @@ public class YACL {
                                                 () -> config.soundDetection.movement.sprintRadius,
                                                 value -> config.soundDetection.movement.sprintRadius = value
                                         )
-                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(0.5f))
+                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(1.0f))
                                         .build())
                                 .option(Option.<Float>createBuilder()
                                         .name(Text.literal("Jumping Radius"))
@@ -78,7 +78,7 @@ public class YACL {
                                                 () -> config.soundDetection.movement.jumpRadius,
                                                 value -> config.soundDetection.movement.jumpRadius = value
                                         )
-                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(0.5f))
+                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(1.0f))
                                         .build())
                                 .build())
                         .build())
@@ -115,7 +115,7 @@ public class YACL {
                                                 () -> config.stealthDetection.proximityRadius,
                                                 value -> config.stealthDetection.proximityRadius = value
                                         )
-                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 5.0f).step(0.5f))
+                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 5.0f).step(1.0f))
                                         .build())
                                 .build())
                         .build())
@@ -195,7 +195,7 @@ public class YACL {
                                                         () -> opt.pendingValue().getValue(),
                                                         newValue -> opt.requestSet(new KeyValueController.KeyValuePair<>(opt.pendingValue().getKey(), newValue))
                                                 )
-                                                .controller(opt2 -> FloatSliderControllerBuilder.create(opt2).range(0.0f, 16.0f).step(0.5f))
+                                                .controller(opt2 -> FloatSliderControllerBuilder.create(opt2).range(0.0f, 16.0f).step(1.0f))
                                                 .build().controller()
                                 ))
                                 .initial(new KeyValueController.KeyValuePair<>("minecraft:new_item", 6.0f))
@@ -210,7 +210,7 @@ public class YACL {
                                                 () -> config.soundDetection.interaction.tagConfigs.get("minecraft:pressure_plates").radius,
                                                 value -> config.soundDetection.interaction.tagConfigs.get("minecraft:pressure_plates").radius = value
                                         )
-                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(0.5f))
+                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(1.0f))
                                         .build())
                                 .option(Option.<Float>createBuilder()
                                         .name(Text.literal("Buttons Radius"))
@@ -220,7 +220,7 @@ public class YACL {
                                                 () -> config.soundDetection.interaction.tagConfigs.get("minecraft:buttons").radius,
                                                 value -> config.soundDetection.interaction.tagConfigs.get("minecraft:buttons").radius = value
                                         )
-                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(0.5f))
+                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(1.0f))
                                         .build())
                                 .build())
                         // Create separate group for the block list
@@ -250,7 +250,7 @@ public class YACL {
                                                         () -> opt.pendingValue().getValue(),
                                                         newValue -> opt.requestSet(new KeyValueController.KeyValuePair<>(opt.pendingValue().getKey(), newValue))
                                                 )
-                                                .controller(opt2 -> FloatSliderControllerBuilder.create(opt2).range(0.0f, 16.0f).step(0.5f))
+                                                .controller(opt2 -> FloatSliderControllerBuilder.create(opt2).range(0.0f, 16.0f).step(1.0f))
                                                 .build().controller()
                                 ))
                                 .initial(new KeyValueController.KeyValuePair<>("minecraft:new_block", 6.0f))
@@ -269,7 +269,7 @@ public class YACL {
                                                 () -> config.soundDetection.fallingBlock.tagConfigs.get("minecraft:concrete_powder").radius,
                                                 value -> config.soundDetection.fallingBlock.tagConfigs.get("minecraft:concrete_powder").radius = value
                                         )
-                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(0.5f))
+                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(1.0f))
                                         .build())
                                 .build())
                         .build())
