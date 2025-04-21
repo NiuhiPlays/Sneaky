@@ -33,7 +33,9 @@ public class Config {
         public float soundCooldownSeconds = 2.0f; // Seconds before mob can react again
 
         public static class MovementConfig {
-            public float defaultRadius = 6.0f; // Blocks for footsteps
+            public float walkRadius = 8.0f; // Blocks for walking
+            public float sprintRadius = 12.0f; // Blocks for sprinting
+            public float jumpRadius = 10.0f; // Blocks for jumping
             public float multiplier = 1.0f;
         }
 

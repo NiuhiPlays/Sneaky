@@ -83,13 +83,15 @@ public class SoundDetectionPlayerMixin {
         var config = ConfigLoader.getConfig().soundDetection;
         BlockPos pos = player.getBlockPos();
 
-        if (!player.isSneaking() && (player.isSprinting() || player.getVelocity().horizontalLengthSquared() > 0.01)) {
-            SoundDetection.handleSoundEvent(world, pos, config.movement.defaultRadius, ConfigLoader.getConfig());
+        // Check if player is moving (walking or sprinting)
+        if (!player.isSneaking() && player.getVelocity().horizontalLengthSquared() > 0.01) {
+            float radius = player.isSprinting() ? config.movement.sprintRadius : config.movement.walkRadius;
+            SoundDetection.handleSoundEvent(world, pos, radius, ConfigLoader.getConfig());
         }
-    }
 
-    @Inject(method = "tick", at = @At("HEAD"))
-    private void dummyTick(CallbackInfo ci) {
-        // No-op
+        // Check for jumping (vertical velocity indicates a jump)
+        if (!player.isSneaking() && player.getVelocity().y > 0.4 && !player.isOnGround()) {
+            SoundDetection.handleSoundEvent(world, pos, config.movement.jumpRadius, ConfigLoader.getConfig());
+        }
     }
 }

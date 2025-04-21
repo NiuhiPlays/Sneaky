@@ -51,12 +51,32 @@ public class YACL {
                         .group(OptionGroup.createBuilder()
                                 .name(Text.literal("Movement"))
                                 .option(Option.<Float>createBuilder()
-                                        .name(Text.literal("Footstep Radius"))
+                                        .name(Text.literal("walk Radius"))
                                         .description(OptionDescription.of(Text.literal("Radius for detecting player movement (blocks)")))
                                         .binding(
                                                 6.0f,
-                                                () -> config.soundDetection.movement.defaultRadius,
-                                                value -> config.soundDetection.movement.defaultRadius = value
+                                                () -> config.soundDetection.movement.walkRadius,
+                                                value -> config.soundDetection.movement.walkRadius = value
+                                        )
+                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(0.5f))
+                                        .build())
+                                .option(Option.<Float>createBuilder()
+                                        .name(Text.literal("Sprinting Radius"))
+                                        .description(OptionDescription.of(Text.literal("Radius for detecting player movement (blocks)")))
+                                        .binding(
+                                                6.0f,
+                                                () -> config.soundDetection.movement.sprintRadius,
+                                                value -> config.soundDetection.movement.sprintRadius = value
+                                        )
+                                        .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(0.5f))
+                                        .build())
+                                .option(Option.<Float>createBuilder()
+                                        .name(Text.literal("Jumping Radius"))
+                                        .description(OptionDescription.of(Text.literal("Radius for detecting player movement (blocks)")))
+                                        .binding(
+                                                6.0f,
+                                                () -> config.soundDetection.movement.jumpRadius,
+                                                value -> config.soundDetection.movement.jumpRadius = value
                                         )
                                         .controller(opt -> FloatSliderControllerBuilder.create(opt).range(0.0f, 16.0f).step(0.5f))
                                         .build())

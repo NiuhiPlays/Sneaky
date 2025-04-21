@@ -24,10 +24,11 @@ public class SoundDetection {
 
         // Check for ambient sound sources
         float adjustedRadius = soundRadius;
-        boolean isAmbientAffected = soundRadius == config.soundDetection.movement.defaultRadius ||
+        boolean isAmbientAffected = soundRadius == config.soundDetection.movement.walkRadius ||
+                soundRadius == config.soundDetection.movement.sprintRadius ||
+                soundRadius == config.soundDetection.movement.jumpRadius ||
                 config.soundDetection.use.items.values().stream().anyMatch(item -> item.radius == soundRadius) ||
-                config.soundDetection.interaction.blocks.values().stream().anyMatch(block -> block.radius == soundRadius) ||
-                config.soundDetection.fallingBlock.fallingBlocks.values().stream().anyMatch(block -> block.radius == soundRadius);
+                config.soundDetection.interaction.blocks.values().stream().anyMatch(block -> block.radius == soundRadius);
         if (!isAmbientAffected && config.soundDetection.interaction.useBlockTags) {
             for (var entry : config.soundDetection.interaction.tagConfigs.entrySet()) {
                 if (entry.getValue().radius == soundRadius) {
@@ -76,7 +77,9 @@ public class SoundDetection {
 
         // Apply category multiplier
         float finalRadius = adjustedRadius;
-        if (soundRadius == config.soundDetection.movement.defaultRadius) {
+        if (soundRadius == config.soundDetection.movement.walkRadius ||
+                soundRadius == config.soundDetection.movement.sprintRadius ||
+                soundRadius == config.soundDetection.movement.jumpRadius) {
             finalRadius *= config.soundDetection.movement.multiplier;
         } else if (config.soundDetection.use.items.values().stream().anyMatch(item -> item.radius == soundRadius)) {
             finalRadius *= config.soundDetection.use.multiplier;

@@ -19,6 +19,15 @@ public class StealthDetectionMixin {
         if (!(mob instanceof HostileEntity hostileMob) || !(target instanceof PlayerEntity player)) {
             return; // Only apply to hostile mobs targeting players
         }
+
+        // Skip stealth check if player is within proximity radius
+        var config = ConfigLoader.getConfig().stealthDetection;
+        double distance = mob.getPos().distanceTo(target.getPos());
+        if (distance <= config.proximityRadius) {
+            return; // Allow targeting
+        }
+
+        // Apply stealth detection
         if (!StealthDetection.canDetectPlayer(player, hostileMob, ConfigLoader.getConfig())) {
             ci.cancel(); // Prevent setting target if stealth check fails
         }
