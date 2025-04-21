@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ProjectileEntity.class)
-public class SoundDetectionProjectileMixin {
+public class ProjectileSoundMixin {
     @Inject(method = "onCollision(Lnet/minecraft/util/hit/HitResult;)V", at = @At("HEAD"))
     private void onProjectileHit(HitResult hitResult, CallbackInfo ci) {
         if (!(hitResult instanceof BlockHitResult blockHitResult)) return;
@@ -24,6 +24,6 @@ public class SoundDetectionProjectileMixin {
 
         BlockPos pos = blockHitResult.getBlockPos();
         var config = ConfigLoader.getConfig().soundDetection;
-        SoundDetection.handleSoundEvent(world, pos, config.projectile.defaultRadius, ConfigLoader.getConfig());
+        SoundDetection.handleSoundEvent(world, pos, config.projectile.defaultRadius, ConfigLoader.getConfig(), "projectile");
     }
 }

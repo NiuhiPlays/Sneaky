@@ -3,13 +3,14 @@
 	"package": "com.niuhi.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ViewConeMixin",
-		"StealthDetectionMixin",
-		"SoundDetectionPlayerMixin",
-		"SoundDetectionProjectileMixin",
-		"SoundDetectionExplosionMixin",
-		"SoundDetectionFallingBlockMixin",
-		"PlayerFallingMixin"
+		"ExplosionSoundMixin",
+		"FallingBlockSoundMixin",
+		"MobTargetMixin",
+		"PlayerFallDamageMixin",
+		"PlayerInteractionMixin",
+		"PlayerSoundMixin",
+		"ProjectileSoundMixin",
+		"RedstoneBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

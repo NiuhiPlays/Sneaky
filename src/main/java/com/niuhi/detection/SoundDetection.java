@@ -1,5 +1,6 @@
 package com.niuhi.detection;
 
+import com.niuhi.SneakyMod;
 import com.niuhi.config.Config;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.JukeboxBlock;
@@ -21,12 +22,9 @@ public class SoundDetection {
     private static final Map<UUID, Long> mobSoundCooldowns = new HashMap<>();
 
     public static boolean isValidBlockArea(World world, BlockPos center, String blockId, String tagId) {
-        // Check 2x2 to 5x5 area centered on the block
         int minSize = 2;
         int maxSize = 5;
-        boolean hasMinArea = false;
-
-        for (int size = minSize; size <= maxSize; size += 2) { // Check 2x2, 3x3, 4x4, 5x5
+        for (int size = minSize; size <= maxSize; size += 2) {
             boolean allMatch = true;
             int halfSize = size / 2;
             for (int x = -halfSize; x <= halfSize; x++) {
@@ -36,13 +34,12 @@ public class SoundDetection {
                     boolean matches = false;
 
                     if (tagId != null) {
-                        if (tagId.equals("minecraft:wool") && state.isIn(BlockTags.WOOL)) {
-                            matches = true;
-                        } else if (tagId.equals("minecraft:carpets") && state.isIn(BlockTags.WOOL_CARPETS)) {
-                            matches = true;
-                        } else if (tagId.equals("minecraft:leaves") && state.isIn(BlockTags.LEAVES)) {
-                            matches = true;
-                        }
+                        matches = switch (tagId) {
+                            case "minecraft:wool" -> state.isIn(BlockTags.WOOL);
+                            case "minecraft:carpets" -> state.isIn(BlockTags.WOOL_CARPETS);
+                            case "minecraft:leaves" -> state.isIn(BlockTags.LEAVES);
+                            default -> false;
+                        };
                     } else {
                         String checkBlockId = Registries.BLOCK.getId(state.getBlock()).toString();
                         matches = checkBlockId.equals(blockId);
@@ -55,136 +52,122 @@ public class SoundDetection {
                 }
                 if (!allMatch) break;
             }
-            if (allMatch) {
-                hasMinArea = true;
-                break;
-            }
+            if (allMatch) return true;
         }
-        return hasMinArea;
+        return false;
     }
 
-    public static void handleSoundEvent(World world, BlockPos pos, float soundRadius, Config config) {
+    public static void handleSoundEvent(World world, BlockPos pos, float soundRadius, Config config, String soundCategory) {
+        if (world.isClient) return;
+
+        SneakyMod.LOGGER.debug("Attempting to handle sound event: category={}, pos={}, initialRadius={}", soundCategory, pos, soundRadius);
+
         long currentTick = world.getTime();
         float cooldownTicks = config.soundDetection.soundCooldownSeconds * 20.0f;
 
-        // Check for sound-softening blocks
+        // Sound softening
         float soundSofteningMultiplier = 1.0f;
         var blockState = world.getBlockState(pos.down());
-        var block = blockState.getBlock();
-        String blockId = Registries.BLOCK.getId(block).toString();
+        String blockId = Registries.BLOCK.getId(blockState.getBlock()).toString();
 
-        // Check block tags for sound softening
         if (config.soundDetection.soundSofteningUseBlockTags) {
             for (var entry : config.soundDetection.soundSofteningTagConfigs.entrySet()) {
-                String tagId = entry.getKey();
-                float multiplier = entry.getValue().radius;
-                if ((tagId.equals("minecraft:wool") && blockState.isIn(BlockTags.WOOL)) ||
-                        (tagId.equals("minecraft:carpets") && blockState.isIn(BlockTags.WOOL_CARPETS)) ||
-                        (tagId.equals("minecraft:leaves") && blockState.isIn(BlockTags.LEAVES))) {
-                    if (isValidBlockArea(world, pos.down(), null, tagId)) {
-                        soundSofteningMultiplier = multiplier;
-                        break;
-                    }
+                if (isValidBlockArea(world, pos.down(), null, entry.getKey())) {
+                    soundSofteningMultiplier = entry.getValue().radius;
+                    SneakyMod.LOGGER.debug("Applied softening multiplier {} for tag {}", soundSofteningMultiplier, entry.getKey());
+                    break;
                 }
             }
         }
 
-        // Check individual blocks for sound softening (only if no tag match)
         if (soundSofteningMultiplier == 1.0f && config.soundDetection.soundSofteningBlocks.containsKey(blockId)) {
             if (isValidBlockArea(world, pos.down(), blockId, null)) {
                 soundSofteningMultiplier = config.soundDetection.soundSofteningBlocks.get(blockId).radius;
+                SneakyMod.LOGGER.debug("Applied softening multiplier {} for block {}", soundSofteningMultiplier, blockId);
             }
         }
 
-        // Check for ambient sound sources
+        // Ambient sound influence (category-specific)
         float adjustedRadius = soundRadius * soundSofteningMultiplier;
-        boolean isAmbientAffected = soundRadius == config.soundDetection.movement.walkRadius ||
-                soundRadius == config.soundDetection.movement.sprintRadius ||
-                soundRadius == config.soundDetection.movement.jumpRadius ||
-                config.soundDetection.use.items.values().stream().anyMatch(item -> item.radius == soundRadius) ||
-                config.soundDetection.interaction.blocks.values().stream().anyMatch(blockConfig -> blockConfig.radius == soundRadius);
-        if (!isAmbientAffected && config.soundDetection.interaction.useBlockTags) {
-            for (var entry : config.soundDetection.interaction.tagConfigs.entrySet()) {
-                if (entry.getValue().radius == soundRadius) {
-                    isAmbientAffected = true;
-                    break;
-                }
-            }
-        }
-        if (!isAmbientAffected && config.soundDetection.fallingBlock.useBlockTags) {
-            for (var entry : config.soundDetection.fallingBlock.tagConfigs.entrySet()) {
-                if (entry.getValue().radius == soundRadius) {
-                    isAmbientAffected = true;
-                    break;
-                }
-            }
-        }
+        boolean isAmbientAffected = switch (soundCategory) {
+            case "movement", "interaction", "falling_block", "projectile" -> true;
+            case "explosion", "use" -> false; // Explosions and firework rockets unaffected
+            default -> true;
+        };
+
         if (isAmbientAffected) {
             boolean hasAmbientSound = false;
+            int maxChecks = 343; // 7x7x7 cube
+            int checks = 0;
             for (int x = -3; x <= 3; x++) {
                 for (int y = -3; y <= 3; y++) {
                     for (int z = -3; z <= 3; z++) {
+                        if (++checks > maxChecks) {
+                            SneakyMod.LOGGER.warn("Ambient sound check limit reached at {}", pos);
+                            break;
+                        }
                         BlockPos checkPos = pos.add(x, y, z);
                         var state = world.getBlockState(checkPos);
-                        var checkBlock = state.getBlock();
+                        var block = state.getBlock();
 
-                        if (checkBlock == Blocks.WATER || checkBlock == Blocks.LAVA) {
+                        if (block == Blocks.WATER || block == Blocks.LAVA) {
                             FluidState fluidState = world.getFluidState(checkPos);
-                            if (fluidState.isStill()) continue;
-                            hasAmbientSound = true;
-                        } else if (checkBlock == Blocks.NETHER_PORTAL) {
-                            hasAmbientSound = true;
-                        } else if (checkBlock instanceof JukeboxBlock && state.get(JukeboxBlock.HAS_RECORD)) {
+                            if (!fluidState.isStill()) hasAmbientSound = true;
+                        } else if (block == Blocks.NETHER_PORTAL || (block instanceof JukeboxBlock && state.get(JukeboxBlock.HAS_RECORD))) {
                             hasAmbientSound = true;
                         }
 
                         if (hasAmbientSound) break;
                     }
-                    if (hasAmbientSound) break;
+                    if (hasAmbientSound || checks > maxChecks) break;
                 }
-                if (hasAmbientSound) break;
+                if (hasAmbientSound || checks > maxChecks) break;
             }
             if (hasAmbientSound) {
                 adjustedRadius *= config.soundDetection.ambientSoundMultiplier;
+                SneakyMod.LOGGER.debug("Ambient sound detected near {}, reducing radius by {}", pos, config.soundDetection.ambientSoundMultiplier);
             }
         }
 
         // Apply category multiplier
-        float finalRadius = adjustedRadius;
-        if (soundRadius == config.soundDetection.movement.walkRadius ||
-                soundRadius == config.soundDetection.movement.sprintRadius ||
-                soundRadius == config.soundDetection.movement.jumpRadius) {
-            finalRadius *= config.soundDetection.movement.multiplier;
-        } else if (config.soundDetection.use.items.values().stream().anyMatch(item -> item.radius == soundRadius)) {
-            finalRadius *= config.soundDetection.use.multiplier;
-        } else if (config.soundDetection.interaction.blocks.values().stream().anyMatch(blockConfig -> blockConfig.radius == soundRadius) ||
-                (config.soundDetection.interaction.useBlockTags &&
-                        config.soundDetection.interaction.tagConfigs.values().stream().anyMatch(tag -> tag.radius == soundRadius))) {
-            finalRadius *= config.soundDetection.interaction.multiplier;
-        } else if (config.soundDetection.fallingBlock.fallingBlocks.values().stream().anyMatch(blockConfig -> blockConfig.radius == soundRadius) ||
-                (config.soundDetection.fallingBlock.useBlockTags &&
-                        config.soundDetection.fallingBlock.tagConfigs.values().stream().anyMatch(tag -> tag.radius == soundRadius))) {
-            finalRadius *= config.soundDetection.fallingBlock.multiplier;
-        } else if (soundRadius == config.soundDetection.projectile.defaultRadius) {
-            finalRadius *= config.soundDetection.projectile.multiplier;
-        } else if (soundRadius == config.soundDetection.explosion.defaultRadius) {
-            finalRadius *= config.soundDetection.explosion.multiplier;
+        float finalRadius = adjustedRadius * switch (soundCategory) {
+            case "movement" -> config.soundDetection.movement.multiplier;
+            case "use" -> config.soundDetection.use.multiplier;
+            case "interaction" -> config.soundDetection.interaction.multiplier;
+            case "falling_block" -> config.soundDetection.fallingBlock.multiplier;
+            case "projectile" -> config.soundDetection.projectile.multiplier;
+            case "explosion" -> config.soundDetection.explosion.multiplier;
+            default -> 1.0f;
+        };
+
+        SneakyMod.LOGGER.debug("Final sound event: category={}, pos={}, initialRadius={}, softeningMultiplier={}, adjustedRadius={}, finalRadius={}",
+                soundCategory, pos, soundRadius, soundSofteningMultiplier, adjustedRadius, finalRadius);
+
+        // Notify mobs
+        if (finalRadius <= 0) {
+            SneakyMod.LOGGER.debug("Skipping mob notification: finalRadius is {}", finalRadius);
+            return;
         }
 
-        // Use finalRadius for detection
         Vec3d center = Vec3d.ofCenter(pos);
         Box box = new Box(center.subtract(finalRadius, finalRadius, finalRadius),
                 center.add(finalRadius, finalRadius, finalRadius));
         List<HostileEntity> mobs = world.getEntitiesByClass(HostileEntity.class, box, mob -> true);
 
+        SneakyMod.LOGGER.debug("Found {} mobs within radius {} at {}", mobs.size(), finalRadius, pos);
         for (HostileEntity mob : mobs) {
             double distance = mob.getPos().distanceTo(center);
             if (distance <= finalRadius) {
                 UUID mobId = mob.getUuid();
                 if (!mobSoundCooldowns.containsKey(mobId) || (currentTick - mobSoundCooldowns.get(mobId)) >= cooldownTicks) {
                     mobSoundCooldowns.put(mobId, currentTick);
+                    SneakyMod.LOGGER.debug("Notifying mob {} at {} for sound at {}", mobId, mob.getPos(), pos);
                     mob.getNavigation().startMovingTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 1.0);
+                } else {
+                    SneakyMod.LOGGER.debug("Mob {} on cooldown, skipping notification", mobId);
                 }
+            } else {
+                SneakyMod.LOGGER.debug("Mob {} at {} too far (distance={}) from sound at {}", mob, mob.getPos(), distance, pos);
             }
         }
     }
