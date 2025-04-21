@@ -16,8 +16,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 @Mixin(PlayerEntity.class)
 public class SoundDetectionPlayerMixin {
+    private static final Map<UUID, Long> playerSoundCooldowns = new HashMap<>();
+    private static final float SOUND_COOLDOWN_SECONDS = 0.5f; // 0.5 seconds between sound events
+
     static {
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
             if (world.isClient) return ActionResult.PASS;
@@ -80,18 +87,34 @@ public class SoundDetectionPlayerMixin {
         World world = player.getWorld();
         if (world.isClient) return;
 
+        long currentTick = world.getTime();
+        UUID playerId = player.getUuid();
+        float cooldownTicks = SOUND_COOLDOWN_SECONDS * 20.0f;
+
+        // Check cooldown to prevent spamming sound events
+        if (playerSoundCooldowns.containsKey(playerId) && (currentTick - playerSoundCooldowns.get(playerId)) < cooldownTicks) {
+            return;
+        }
+
         var config = ConfigLoader.getConfig().soundDetection;
         BlockPos pos = player.getBlockPos();
 
         // Check if player is moving (walking or sprinting)
-        if (!player.isSneaking() && player.getVelocity().horizontalLengthSquared() > 0.01) {
+        if (!player.isSneaking() && player.getVelocity().horizontalLengthSquared() > 0.0001) {
             float radius = player.isSprinting() ? config.movement.sprintRadius : config.movement.walkRadius;
             SoundDetection.handleSoundEvent(world, pos, radius, ConfigLoader.getConfig());
+            playerSoundCooldowns.put(playerId, currentTick);
         }
 
         // Check for jumping (vertical velocity indicates a jump)
-        if (!player.isSneaking() && player.getVelocity().y > 0.4 && !player.isOnGround()) {
+        if (!player.isSneaking() && player.getVelocity().y > 0.3 && !player.isOnGround() && !player.isClimbing() && !player.isInLava() && !player.isTouchingWater()) {
             SoundDetection.handleSoundEvent(world, pos, config.movement.jumpRadius, ConfigLoader.getConfig());
+            playerSoundCooldowns.put(playerId, currentTick);
         }
+    }
+
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void dummyTick(CallbackInfo ci) {
+        // No-op
     }
 }

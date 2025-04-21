@@ -20,6 +20,49 @@ import java.util.UUID;
 public class SoundDetection {
     private static final Map<UUID, Long> mobSoundCooldowns = new HashMap<>();
 
+    public static boolean isValidBlockArea(World world, BlockPos center, String blockId, String tagId) {
+        // Check 2x2 to 5x5 area centered on the block
+        int minSize = 2;
+        int maxSize = 5;
+        boolean hasMinArea = false;
+
+        for (int size = minSize; size <= maxSize; size += 2) { // Check 2x2, 3x3, 4x4, 5x5
+            boolean allMatch = true;
+            int halfSize = size / 2;
+            for (int x = -halfSize; x <= halfSize; x++) {
+                for (int z = -halfSize; z <= halfSize; z++) {
+                    BlockPos checkPos = center.add(x, 0, z);
+                    var state = world.getBlockState(checkPos);
+                    boolean matches = false;
+
+                    if (tagId != null) {
+                        if (tagId.equals("minecraft:wool") && state.isIn(BlockTags.WOOL)) {
+                            matches = true;
+                        } else if (tagId.equals("minecraft:carpets") && state.isIn(BlockTags.WOOL_CARPETS)) {
+                            matches = true;
+                        } else if (tagId.equals("minecraft:leaves") && state.isIn(BlockTags.LEAVES)) {
+                            matches = true;
+                        }
+                    } else {
+                        String checkBlockId = Registries.BLOCK.getId(state.getBlock()).toString();
+                        matches = checkBlockId.equals(blockId);
+                    }
+
+                    if (!matches) {
+                        allMatch = false;
+                        break;
+                    }
+                }
+                if (!allMatch) break;
+            }
+            if (allMatch) {
+                hasMinArea = true;
+                break;
+            }
+        }
+        return hasMinArea;
+    }
+
     public static void handleSoundEvent(World world, BlockPos pos, float soundRadius, Config config) {
         long currentTick = world.getTime();
         float cooldownTicks = config.soundDetection.soundCooldownSeconds * 20.0f;
@@ -35,22 +78,22 @@ public class SoundDetection {
             for (var entry : config.soundDetection.soundSofteningTagConfigs.entrySet()) {
                 String tagId = entry.getKey();
                 float multiplier = entry.getValue().radius;
-                if (tagId.equals("minecraft:wool") && blockState.isIn(BlockTags.WOOL)) {
-                    soundSofteningMultiplier = multiplier;
-                    break;
-                } else if (tagId.equals("minecraft:carpets") && blockState.isIn(BlockTags.WOOL_CARPETS)) {
-                    soundSofteningMultiplier = multiplier;
-                    break;
-                } else if (tagId.equals("minecraft:leaves") && blockState.isIn(BlockTags.LEAVES)) {
-                    soundSofteningMultiplier = multiplier;
-                    break;
+                if ((tagId.equals("minecraft:wool") && blockState.isIn(BlockTags.WOOL)) ||
+                        (tagId.equals("minecraft:carpets") && blockState.isIn(BlockTags.WOOL_CARPETS)) ||
+                        (tagId.equals("minecraft:leaves") && blockState.isIn(BlockTags.LEAVES))) {
+                    if (isValidBlockArea(world, pos.down(), null, tagId)) {
+                        soundSofteningMultiplier = multiplier;
+                        break;
+                    }
                 }
             }
         }
 
         // Check individual blocks for sound softening (only if no tag match)
         if (soundSofteningMultiplier == 1.0f && config.soundDetection.soundSofteningBlocks.containsKey(blockId)) {
-            soundSofteningMultiplier = config.soundDetection.soundSofteningBlocks.get(blockId).radius;
+            if (isValidBlockArea(world, pos.down(), blockId, null)) {
+                soundSofteningMultiplier = config.soundDetection.soundSofteningBlocks.get(blockId).radius;
+            }
         }
 
         // Check for ambient sound sources

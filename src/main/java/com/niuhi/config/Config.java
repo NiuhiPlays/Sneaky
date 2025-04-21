@@ -9,8 +9,8 @@ public class Config {
     public SoundDetectionConfig soundDetection = new SoundDetectionConfig();
 
     public static class ViewConeConfig {
-        public float coneAngle = 60.0f; // Degrees
-        public float maxDistance = 16.0f; // Blocks
+        public float coneAngle = 75.0f; // Degrees
+        public float maxDistance = 32.0f; // Blocks
     }
 
     public static class StealthDetectionConfig {
@@ -19,6 +19,7 @@ public class Config {
         public float lightLevelMinChance = 0.0f; // Chance at light level 0
         public float proximityRadius = 2.0f; // Blocks to always detect player
         public boolean hideInTallPlants = true; // Hides player when sneaking in tall plants
+        public float clearViewChanceMultiplier = 2.0f; // Multiplier for detection chance in clear view
     }
 
     public static class SoundDetectionConfig {

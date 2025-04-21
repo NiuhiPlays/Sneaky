@@ -5,8 +5,11 @@ import net.minecraft.block.*;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
+import net.minecraft.world.World;
 
 public class ViewCone {
     public static boolean isInViewCone(HostileEntity mob, LivingEntity target, Config config) {
@@ -39,6 +42,31 @@ public class ViewCone {
         double angle = Math.acos(dot) * 180 / Math.PI;
 
         // Check if within cone
-        return angle <= (config.viewCone.coneAngle / 2.0);
+        if (angle <= (config.viewCone.coneAngle / 2.0)) {
+            // Check for clear line of sight
+            World world = mob.getWorld();
+            RaycastContext context = new RaycastContext(
+                    mobPos,
+                    targetPos,
+                    RaycastContext.ShapeType.COLLIDER,
+                    RaycastContext.FluidHandling.NONE,
+                    mob
+            );
+            BlockHitResult hitResult = world.raycast(context);
+            boolean hasObstruction = hitResult.getType() == BlockHitResult.Type.BLOCK;
+
+            if (!hasObstruction) {
+                // Apply clear view multiplier to detection chance
+                if (target instanceof PlayerEntity player) {
+                    float chance = StealthDetection.calculateDetectionChance(player, mob, config);
+                    chance *= config.stealthDetection.clearViewChanceMultiplier;
+                    return mob.getRandom().nextFloat() < Math.min(chance, 1.0f);
+                }
+                return true; // Non-player targets are always detected in clear view
+            }
+            return true; // Within cone, rely on StealthDetection
+        }
+
+        return false;
     }
 }

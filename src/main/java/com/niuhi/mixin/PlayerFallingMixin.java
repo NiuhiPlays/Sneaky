@@ -2,6 +2,7 @@ package com.niuhi.mixin;
 
 import com.niuhi.config.ConfigLoader;
 import net.minecraft.entity.player.PlayerEntity;
+import com.niuhi.detection.SoundDetection;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.math.BlockPos;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,14 +29,18 @@ public class PlayerFallingMixin {
             for (var entry : config.fallDamageSofteningTagConfigs.entrySet()) {
                 String tagId = entry.getKey();
                 float multiplier = entry.getValue().radius;
-                // Add tag checks here if tags are configured
-                // Example: if (tagId.equals("minecraft:some_tag") && blockState.isIn(BlockTags.SOME_TAG))
+                if (SoundDetection.isValidBlockArea(player.getWorld(), landingPos, null, tagId)) {
+                    fallDamageMultiplier = multiplier;
+                    break;
+                }
             }
         }
 
         // Check individual blocks for fall damage softening (only if no tag match)
         if (fallDamageMultiplier == 1.0f && config.fallDamageSofteningBlocks.containsKey(blockId)) {
-            fallDamageMultiplier = config.fallDamageSofteningBlocks.get(blockId).radius;
+            if (SoundDetection.isValidBlockArea(player.getWorld(), landingPos, blockId, null)) {
+                fallDamageMultiplier = config.fallDamageSofteningBlocks.get(blockId).radius;
+            }
         }
 
         return damage * fallDamageMultiplier;
